@@ -1,16 +1,28 @@
-from flask import Flask
+#!/usr/bin/python3
+"""Connect to API"""
+
+import os
 from models import storage
 from api.v1.views import app_views
+from flask import Flask, Blueprint, jsonify, make_response
+from flask_cors import CORS
+
 
 app = Flask(__name__)
 app.register_blueprint(app_views)
+cors = CORS(app, resources={"/*": {"origins": "0.0.0.0"}})
+
 
 @app.teardown_appcontext
-def teardown_app_context(exception):
-    """Close the storage engine when the app context ends."""
+def teardown_appcontext(code):
+    """teardown_appcontext"""
     storage.close()
 
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return make_response(jsonify({'error': 'Not found'}), 404)
+
 if __name__ == "__main__":
-    host = os.environ.get('HBNB_API_HOST', '0.0.0.0')
-    port = os.environ.get('HBNB_API_PORT', 5000)
-    app.run(host=host, port=port, threaded=True)
+    app.run(host=os.getenv('HBNB_API_HOST', '0.0.0.0'),
+            port=int(os.getenv('HBNB_API_PORT', '5000')))
